@@ -1,0 +1,738 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Técnico em Desenvolvimento de Sistemas</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&display=swap');
+
+  :root {
+    --green: #00FF41;
+    --green-dim: #008F11;
+    --green-dark: #003B00;
+    --black: #0D0D0D;
+    --red: #FF0033;
+    --blue: #0066FF;
+    --text: #C8F7C5;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--black);
+    color: var(--green);
+    font-family: 'Share Tech Mono', monospace;
+    min-height: 100vh;
+    overflow-x: hidden;
+    cursor: default;
+  }
+
+  /* MATRIX RAIN */
+  #matrix-canvas {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    opacity: 0.07;
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  /* SCANLINES */
+  body::after {
+    content: '';
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0,255,65,0.015) 2px,
+      rgba(0,255,65,0.015) 4px
+    );
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  .screen {
+    position: relative;
+    z-index: 2;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 24px 20px;
+  }
+
+  /* MAIN SCREEN */
+  #screen-main {
+    display: flex;
+    text-align: center;
+  }
+
+  .glitch-title {
+    font-family: 'Orbitron', monospace;
+    font-size: clamp(13px, 4vw, 20px);
+    font-weight: 900;
+    color: var(--green);
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    text-shadow: 0 0 20px var(--green), 0 0 40px var(--green-dim);
+    margin-bottom: 8px;
+    animation: flicker 4s infinite;
+  }
+
+  @keyframes flicker {
+    0%, 95%, 100% { opacity: 1; }
+    96% { opacity: 0.4; }
+    97% { opacity: 1; }
+    98% { opacity: 0.2; }
+    99% { opacity: 1; }
+  }
+
+  .subtitle {
+    font-size: clamp(10px, 2.5vw, 13px);
+    color: var(--green-dim);
+    letter-spacing: 3px;
+    margin-bottom: 48px;
+  }
+
+  .question-box {
+    border: 1px solid var(--green-dim);
+    padding: 40px 32px;
+    max-width: 480px;
+    width: 100%;
+    position: relative;
+    background: rgba(0, 255, 65, 0.03);
+    box-shadow: 0 0 40px rgba(0,255,65,0.08), inset 0 0 40px rgba(0,255,65,0.03);
+  }
+
+  .question-box::before {
+    content: '> SYSTEM QUERY_';
+    position: absolute;
+    top: -10px;
+    left: 20px;
+    background: var(--black);
+    padding: 0 8px;
+    font-size: 11px;
+    color: var(--green-dim);
+    letter-spacing: 2px;
+  }
+
+  .question-box::after {
+    content: '';
+    position: absolute;
+    bottom: -1px; right: -1px;
+    width: 20px; height: 20px;
+    border-bottom: 2px solid var(--green);
+    border-right: 2px solid var(--green);
+  }
+
+  .question-text {
+    font-family: 'Orbitron', monospace;
+    font-size: clamp(16px, 5vw, 24px);
+    font-weight: 700;
+    color: #fff;
+    line-height: 1.4;
+    margin-bottom: 12px;
+    text-shadow: 0 0 30px rgba(255,255,255,0.3);
+  }
+
+  .question-sub {
+    font-size: 12px;
+    color: var(--green-dim);
+    margin-bottom: 40px;
+    letter-spacing: 1px;
+  }
+
+  .btn-group {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+  }
+
+  .btn {
+    font-family: 'Orbitron', monospace;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    padding: 16px 36px;
+    border: none;
+    cursor: pointer;
+    text-transform: uppercase;
+    position: relative;
+    transition: all 0.2s;
+    clip-path: polygon(8px 0%, 100% 0%, calc(100% - 8px) 100%, 0% 100%);
+  }
+
+  .btn-yes {
+    background: var(--blue);
+    color: #fff;
+    box-shadow: 0 0 20px rgba(0,102,255,0.5);
+  }
+
+  .btn-yes:hover {
+    background: #0088FF;
+    box-shadow: 0 0 35px rgba(0,102,255,0.8);
+    transform: translateY(-2px);
+  }
+
+  .btn-no {
+    background: var(--red);
+    color: #fff;
+    box-shadow: 0 0 20px rgba(255,0,51,0.5);
+  }
+
+  .btn-no:hover {
+    background: #FF2244;
+    box-shadow: 0 0 35px rgba(255,0,51,0.8);
+    transform: translateY(-2px);
+  }
+
+  /* COUNTDOWN SCREEN */
+  #screen-no {
+    display: none;
+    text-align: center;
+  }
+
+  .countdown-label {
+    font-size: 13px;
+    color: var(--red);
+    letter-spacing: 4px;
+    margin-bottom: 16px;
+    animation: pulse-red 0.5s infinite;
+  }
+
+  @keyframes pulse-red {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+  }
+
+  .countdown-number {
+    font-family: 'Orbitron', monospace;
+    font-size: clamp(80px, 25vw, 160px);
+    font-weight: 900;
+    color: var(--red);
+    text-shadow: 0 0 40px var(--red), 0 0 80px rgba(255,0,51,0.5);
+    line-height: 1;
+    animation: shake-num 0.1s infinite;
+  }
+
+  @keyframes shake-num {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-3px) rotate(-1deg); }
+    75% { transform: translateX(3px) rotate(1deg); }
+  }
+
+  /* EXPLOSION SCREEN */
+  #screen-explode {
+    display: none;
+    background: var(--red);
+    text-align: center;
+    animation: explode-in 0.1s ease-out;
+  }
+
+  @keyframes explode-in {
+    0% { transform: scale(0); opacity: 0; }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); opacity: 1; }
+  }
+
+  .bad-decision {
+    font-family: 'Orbitron', monospace;
+    font-size: clamp(28px, 10vw, 64px);
+    font-weight: 900;
+    color: #fff;
+    text-transform: uppercase;
+    letter-spacing: 4px;
+    text-shadow: 0 4px 0 rgba(0,0,0,0.3);
+    animation: bad-shake 0.15s infinite;
+    margin-bottom: 20px;
+  }
+
+  @keyframes bad-shake {
+    0%, 100% { transform: translate(0,0) rotate(0deg); }
+    20% { transform: translate(-4px, 2px) rotate(-1deg); }
+    40% { transform: translate(4px, -2px) rotate(1deg); }
+    60% { transform: translate(-2px, 4px) rotate(-0.5deg); }
+    80% { transform: translate(2px, -4px) rotate(0.5deg); }
+  }
+
+  .bad-sub {
+    font-size: clamp(12px, 3vw, 16px);
+    color: rgba(255,255,255,0.85);
+    letter-spacing: 2px;
+    margin-bottom: 32px;
+  }
+
+  .btn-reconsider {
+    font-family: 'Orbitron', monospace;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    padding: 14px 28px;
+    background: #fff;
+    color: var(--red);
+    border: none;
+    cursor: pointer;
+    text-transform: uppercase;
+    clip-path: polygon(8px 0%, 100% 0%, calc(100% - 8px) 100%, 0% 100%);
+    transition: all 0.2s;
+  }
+
+  .btn-reconsider:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 30px rgba(255,255,255,0.5);
+  }
+
+  /* YES SCREEN */
+  #screen-yes {
+    display: none;
+    text-align: center;
+    padding: 32px 20px;
+  }
+
+  .yes-header {
+    margin-bottom: 48px;
+  }
+
+  .yes-title {
+    font-family: 'Orbitron', monospace;
+    font-size: clamp(14px, 4vw, 22px);
+    font-weight: 900;
+    color: var(--green);
+    letter-spacing: 3px;
+    text-shadow: 0 0 20px var(--green);
+    margin-bottom: 8px;
+  }
+
+  .yes-sub {
+    font-size: 12px;
+    color: var(--green-dim);
+    letter-spacing: 2px;
+  }
+
+  .curso-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 20px;
+    max-width: 900px;
+    width: 100%;
+    margin: 0 auto 40px;
+  }
+
+  .semestre-card {
+    border: 1px solid var(--green-dim);
+    padding: 24px 20px;
+    background: rgba(0,255,65,0.03);
+    position: relative;
+    text-align: left;
+  }
+
+  .semestre-card::before {
+    content: attr(data-label);
+    position: absolute;
+    top: -10px;
+    left: 16px;
+    background: var(--black);
+    padding: 0 8px;
+    font-size: 10px;
+    color: var(--green);
+    letter-spacing: 2px;
+    font-family: 'Orbitron', monospace;
+    font-weight: 700;
+  }
+
+  .semestre-title {
+    font-family: 'Orbitron', monospace;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--green);
+    letter-spacing: 2px;
+    margin-bottom: 16px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--green-dark);
+  }
+
+  .disciplina-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(0,255,65,0.08);
+    gap: 12px;
+  }
+
+  .disciplina-item:last-child { border-bottom: none; }
+
+  .disciplina-nome {
+    font-size: 11px;
+    color: var(--text);
+    letter-spacing: 0.5px;
+    line-height: 1.4;
+    flex: 1;
+  }
+
+  .disciplina-ch {
+    font-size: 10px;
+    color: var(--green-dim);
+    white-space: nowrap;
+    font-family: 'Orbitron', monospace;
+  }
+
+  .semestre-total {
+    margin-top: 14px;
+    padding-top: 10px;
+    border-top: 1px solid var(--green-dim);
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+  }
+
+  .semestre-total span:first-child {
+    color: var(--green-dim);
+    letter-spacing: 1px;
+  }
+
+  .semestre-total span:last-child {
+    color: var(--green);
+    font-family: 'Orbitron', monospace;
+    font-weight: 700;
+  }
+
+  .carga-total-box {
+    border: 1px solid var(--green);
+    padding: 20px 32px;
+    display: inline-flex;
+    gap: 40px;
+    margin-bottom: 40px;
+    background: rgba(0,255,65,0.05);
+    box-shadow: 0 0 30px rgba(0,255,65,0.1);
+  }
+
+  .ct-item {
+    text-align: center;
+  }
+
+  .ct-value {
+    font-family: 'Orbitron', monospace;
+    font-size: 28px;
+    font-weight: 900;
+    color: var(--green);
+    text-shadow: 0 0 20px var(--green);
+    display: block;
+  }
+
+  .ct-label {
+    font-size: 10px;
+    color: var(--green-dim);
+    letter-spacing: 2px;
+    display: block;
+    margin-top: 4px;
+  }
+
+  .btn-matricula {
+    font-family: 'Orbitron', monospace;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    padding: 18px 40px;
+    background: var(--green);
+    color: var(--black);
+    border: none;
+    cursor: pointer;
+    text-transform: uppercase;
+    clip-path: polygon(12px 0%, 100% 0%, calc(100% - 12px) 100%, 0% 100%);
+    transition: all 0.2s;
+    text-decoration: none;
+    display: inline-block;
+    box-shadow: 0 0 30px rgba(0,255,65,0.4);
+    animation: pulse-green 2s infinite;
+  }
+
+  @keyframes pulse-green {
+    0%, 100% { box-shadow: 0 0 30px rgba(0,255,65,0.4); }
+    50% { box-shadow: 0 0 50px rgba(0,255,65,0.7); }
+  }
+
+  .btn-matricula:hover {
+    background: #44FF77;
+    transform: translateY(-3px);
+  }
+
+  .btn-voltar {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 3px;
+    padding: 12px 28px;
+    background: transparent;
+    color: var(--green-dim);
+    border: 1px solid var(--green-dim);
+    cursor: pointer;
+    text-transform: uppercase;
+    transition: all 0.2s;
+  }
+
+  .btn-voltar:hover {
+    color: var(--green);
+    border-color: var(--green);
+    box-shadow: 0 0 15px rgba(0,255,65,0.2);
+  }
+
+  .prompt-line {
+    font-size: 11px;
+    color: var(--green-dim);
+    letter-spacing: 2px;
+    margin-top: 16px;
+  }
+
+  .cursor-blink {
+    animation: blink 1s infinite;
+  }
+
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
+  }
+</style>
+</head>
+<body>
+
+<canvas id="matrix-canvas"></canvas>
+
+<!-- TELA PRINCIPAL -->
+<div class="screen" id="screen-main">
+  <div class="glitch-title">Técnico em Desenvolvimento de Sistemas</div>
+  <div class="subtitle">&gt; SENAI · DR-SC · Presencial_</div>
+
+  <div class="question-box">
+    <div class="question-text">Você vai se comprometer com os estudos?</div>
+    <div class="question-sub">// Sua resposta define o seu futuro</div>
+    <div class="btn-group">
+      <button class="btn btn-yes" onclick="handleYes()">✓ SIM</button>
+      <button class="btn btn-no" onclick="handleNo()">✗ NÃO</button>
+    </div>
+  </div>
+
+  <div class="prompt-line" style="margin-top:32px;">&gt; aguardando input do usuário<span class="cursor-blink">_</span></div>
+</div>
+
+<!-- TELA CONTAGEM REGRESSIVA -->
+<div class="screen" id="screen-no">
+  <div class="countdown-label">&gt; ERRO CRÍTICO DETECTADO — DECISÃO INVÁLIDA</div>
+  <div class="countdown-number" id="countdown-num">3</div>
+</div>
+
+<!-- TELA EXPLOSÃO -->
+<div class="screen" id="screen-explode">
+  <div class="bad-decision">⚠ PÉSSIMA DECISÃO ⚠</div>
+  <div class="bad-sub">// OPORTUNIDADE DESPERDIÇADA · FUTURO COMPROMETIDO · ERRO 404: SUCESSO NÃO ENCONTRADO</div>
+  <button class="btn-reconsider" onclick="handleReconsider()">↩ RECONSIDERAR — AINDA DÁ TEMPO</button>
+</div>
+
+<!-- TELA SIM — GRADE DO CURSO -->
+<div class="screen" id="screen-yes">
+  <div class="yes-header">
+    <div class="yes-title">✓ DECISÃO REGISTRADA — BEM-VINDO AO SISTEMA</div>
+    <div class="yes-sub">&gt; grade curricular carregada com sucesso_</div>
+  </div>
+
+  <div class="carga-total-box">
+    <div class="ct-item">
+      <span class="ct-value">4</span>
+      <span class="ct-label">SEMESTRES</span>
+    </div>
+    <div class="ct-item">
+      <span class="ct-value">1200h</span>
+      <span class="ct-label">CARGA TOTAL</span>
+    </div>
+    <div class="ct-item">
+      <span class="ct-value">16</span>
+      <span class="ct-label">DISCIPLINAS</span>
+    </div>
+  </div>
+
+  <div class="curso-grid">
+    <!-- 1º Semestre -->
+    <div class="semestre-card" data-label="01">
+      <div class="semestre-title">1º SEMESTRE · MÓDULO INTRODUTÓRIO</div>
+      <div class="disciplina-item">
+        <span class="disciplina-nome">Introdução a Tecnologia da Informação e Comunicação</span>
+        <span class="disciplina-ch">40h</span>
+      </div>
+      <div class="disciplina-item">
+        <span class="disciplina-nome">Lógica de Programação</span>
+        <span class="disciplina-ch">220h</span>
+      </div>
+      <div class="disciplina-item">
+        <span class="disciplina-nome">Fundamentos de Eletroeletrônica Aplicada</span>
+        <span class="disciplina-ch">80h</span>
+      </div>
+      <div class="semestre-total">
+        <span>TOTAL DO SEMESTRE</span>
+        <span>340h</span>
+      </div>
+    </div>
+
+    <!-- 2º Semestre -->
+    <div class="semestre-card" data-label="02">
+      <div class="semestre-title">2º SEMESTRE · MÓDULO ESPECÍFICO I & II</div>
+      <div class="disciplina-item">
+        <span class="disciplina-nome">Introdução ao Desenvolvimento de Projetos</span>
+        <span class="disciplina-ch">12h</span>
+      </div>
+      <div class="disciplina-item">
+        <span class="disciplina-nome">Modelagem de Sistemas</span>
+        <span class="disciplina-ch">100h</span>
+      </div>
+      <div class="disciplina-item">
+        <span class="disciplina-nome">Banco de Dados</span>
+        <span class="disciplina-ch">120h</span>
+      </div>
+      <div class="disciplina-item">
+        <span class="disciplina-nome">Programação de Aplicativos</span>
+        <span class="disciplina-ch">100h</span>
+      </div>
+      <div class="semestre-total">
+        <span>TOTAL DO SEMESTRE</span>
+        <span>332h</span>
+      </div>
+    </div>
+
+    <!-- 3º Semestre -->
+    <div class="semestre-card" data-label="03">
+      <div class="semestre-title">3º SEMESTRE · MÓDULO ESPECÍFICO II</div>
+      <div class="disciplina-item">
+        <span class="disciplina-nome">Sustentabilidade nos Processos Industriais</span>
+        <span class="disciplina-ch">8h</span>
+      </div>
+      <div class="disciplina-item">
+        <span class="disciplina-nome">Introdução a Qualidade e Produtividade</span>
+        <span class="disciplina-ch">16h</span>
+      </div>
+      <div class="disciplina-item">
+        <span class="disciplina-nome">Desenvolvimento de Sistemas</span>
+        <span class="disciplina-ch">200h</span>
+      </div>
+      <div class="disciplina-item">
+        <span class="disciplina-nome">Teste de Sistemas</span>
+        <span class="disciplina-ch">60h</span>
+      </div>
+      <div class="semestre-total">
+        <span>TOTAL DO SEMESTRE</span>
+        <span>284h</span>
+      </div>
+    </div>
+
+    <!-- 4º Semestre -->
+    <div class="semestre-card" data-label="04">
+      <div class="semestre-title">4º SEMESTRE · MÓDULO ESPECÍFICO I & II</div>
+      <div class="disciplina-item">
+        <span class="disciplina-nome">Introdução a Indústria 4.0</span>
+        <span class="disciplina-ch">24h</span>
+      </div>
+      <div class="disciplina-item">
+        <span class="disciplina-nome">Saúde e Segurança no Trabalho</span>
+        <span class="disciplina-ch">12h</span>
+      </div>
+      <div class="disciplina-item">
+        <span class="disciplina-nome">Internet das Coisas</span>
+        <span class="disciplina-ch">128h</span>
+      </div>
+      <div class="disciplina-item">
+        <span class="disciplina-nome">Implantação de Sistemas</span>
+        <span class="disciplina-ch">40h</span>
+      </div>
+      <div class="disciplina-item">
+        <span class="disciplina-nome">Manutenção de Sistemas</span>
+        <span class="disciplina-ch">40h</span>
+      </div>
+      <div class="semestre-total">
+        <span>TOTAL DO SEMESTRE</span>
+        <span>244h</span>
+      </div>
+    </div>
+  </div>
+
+  <a href="https://forms.gle/ELWvHqTmLfYMDZ5d6" target="_blank" class="btn-matricula">
+    ▶ FAZER PRÉ-MATRÍCULA
+  </a>
+  <div class="prompt-line">&gt; sua jornada começa agora<span class="cursor-blink">_</span></div>
+  <button class="btn-voltar" onclick="handleReconsider()" style="margin-top:24px;">↩ VOLTAR AO INÍCIO</button>
+</div>
+
+<script>
+  // MATRIX RAIN
+  const canvas = document.getElementById('matrix-canvas');
+  const ctx = canvas.getContext('2d');
+
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+
+  const chars = 'アイウエオカキクケコサシスセソタチツテトナニヌネノ0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ<>{}[]|/\\;:'.split('');
+  const fontSize = 14;
+  const cols = Math.floor(canvas.width / fontSize);
+  const drops = Array(cols).fill(1);
+
+  function drawMatrix() {
+    ctx.fillStyle = 'rgba(13,13,13,0.05)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = '#00FF41';
+    ctx.font = fontSize + 'px Share Tech Mono';
+
+    drops.forEach((y, i) => {
+      const char = chars[Math.floor(Math.random() * chars.length)];
+      ctx.fillText(char, i * fontSize, y * fontSize);
+      if (y * fontSize > canvas.height && Math.random() > 0.975) drops[i] = 0;
+      drops[i]++;
+    });
+  }
+
+  setInterval(drawMatrix, 50);
+
+  window.addEventListener('resize', () => {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+  });
+
+  // NAVEGAÇÃO
+  function showScreen(id) {
+    document.querySelectorAll('.screen').forEach(s => s.style.display = 'none');
+    const el = document.getElementById(id);
+    el.style.display = 'flex';
+  }
+
+  function handleYes() {
+    showScreen('screen-yes');
+    window.scrollTo(0, 0);
+  }
+
+  function handleNo() {
+    showScreen('screen-no');
+    let count = 5;
+    document.getElementById('countdown-num').textContent = count;
+
+    // Vibração se disponível
+    if (navigator.vibrate) navigator.vibrate([200, 100, 200, 100, 200]);
+
+    const interval = setInterval(() => {
+      count--;
+      if (count > 0) {
+        document.getElementById('countdown-num').textContent = count;
+        if (navigator.vibrate) navigator.vibrate(300);
+      } else {
+        clearInterval(interval);
+        showScreen('screen-explode');
+        if (navigator.vibrate) navigator.vibrate([500, 100, 500, 100, 1000]);
+      }
+    }, 1000);
+  }
+
+  function handleReconsider() {
+    showScreen('screen-main');
+  }
+</script>
+</body>
+</html>
